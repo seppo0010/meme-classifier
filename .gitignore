@@ -2,3 +2,5 @@ __pycache__
 train
 to_classify
 train_data.csv
+.ipynb_checkpoints
+classifier*.pickle
