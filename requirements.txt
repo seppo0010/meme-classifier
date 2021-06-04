@@ -5,3 +5,5 @@ pandas
 xgboost
 scikit-learn
 jupyter
+python-telegram-bot
+requests

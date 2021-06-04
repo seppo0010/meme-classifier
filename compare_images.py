@@ -1,6 +1,6 @@
-from skimage.metrics import structural_similarity, normalized_root_mse
-import cv2
 import numpy as np
+import cv2
+from skimage.metrics import structural_similarity, normalized_root_mse, adapted_rand_error, hausdorff_distance, peak_signal_noise_ratio
 
 def compare_images(before, after):
     after = cv2.resize(after, [300, 300])
@@ -36,4 +36,16 @@ def compare_images(before, after):
             cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
     score2 = normalized_root_mse(before, after)
-    return {'similarity': score, 'mse': score2}
+    are, prec, rec = adapted_rand_error(before, after)
+    hausdorff_d = hausdorff_distance(before, after)
+    psnr = peak_signal_noise_ratio(before, after)
+    return {
+        'similarity': score,
+        'mse': score2,
+        'adapted_rand_error_are': are,
+        'adapted_rand_error_prec': prec,
+        'adapted_rand_error_rec': rec,
+        'hausdorff_distance': hausdorff_d,
+        'psnr': psnr,
+    }
+
