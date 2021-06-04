@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 
 def compare_images(before, after):
-    after = cv2.resize(after, [before.shape[1], before.shape[0]])
+    after = cv2.resize(after, [300, 300])
+    before = cv2.resize(before, [300, 300])
     # Convert images to grayscale
     before_gray = cv2.cvtColor(before, cv2.COLOR_BGR2GRAY)
     after_gray = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY)
