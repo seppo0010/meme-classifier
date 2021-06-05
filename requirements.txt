@@ -7,5 +7,6 @@ scikit-learn
 jupyter
 python-telegram-bot
 requests
-matpotlib
+matplotlib
 pytesseract
+python-dotenv
