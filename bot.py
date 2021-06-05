@@ -2,11 +2,19 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 from telegram.ext import Updater, MessageHandler, Filters
-import requests
 import numpy as np
 import pandas as pd
 import cv2
 import pickle
+try:
+    from PIL import Image
+except ImportError:
+    import Image
+import pytesseract
+import cv2
+from matplotlib import cm
+import io
+
 from meme_classifier.compare_images import compare_images
 
 updater = Updater(token=os.getenv('TELEGRAM_TOKEN'), use_context=True)
@@ -29,16 +37,30 @@ def get_row(after):
     return cols
 
 def tag(update, context):
-    photo = update['message'].effective_attachment[0]
-    r = requests.get(photo.get_file()['file_path'])
-    nparr = np.frombuffer(r.content, np.uint8)
+    photo = update['message'].effective_attachment[-1]
+    b = io.BytesIO()
+    content = photo.get_file().download(out=b)
+    content.seek(0)
+    nparr = np.frombuffer(content.read(), np.uint8)
+
     img_np = cv2.imdecode(nparr, flags=1)
+    # cv2.imwrite('cv.jpg', img_np)
+
     data = get_row(img_np)
     df = pd.DataFrame([data], columns=columns)
     proba = classifier.predict_proba(df)[0]
     index = np.argmax(proba)
     val = np.argmax(proba)
-    context.bot.send_message(chat_id=update.effective_chat.id, text=f'{templates[index-1][1]} ({proba[index]})')
+
+    content.seek(0)
+    pil_image = Image.open(content)
+    # pil_image.save("pil.jpg", "JPEG")
+
+    text = '\n'.join((
+        pytesseract.image_to_string(pil_image, lang='eng'),
+        pytesseract.image_to_string(pil_image, lang='spa'),
+    ))
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f'{templates[index-1][1]} ({proba[index]})\ntext: {text}')
 
 tag_handler = MessageHandler(Filters.photo & (~Filters.command), tag)
 
