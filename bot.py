@@ -15,6 +15,7 @@ import pytesseract
 import cv2
 from matplotlib import cm
 import psycopg2
+from telegram import BotCommand
 from telegram.ext import Updater, MessageHandler, Filters
 
 from meme_classifier.compare_images import compare_images
@@ -66,12 +67,31 @@ def tag(update, context):
     ))
 
     cur = conn.cursor()
-    cur.execute("INSERT INTO meme (update_id, template, text) VALUES (%s, %s, %s)", (update['update_id'], int(index), text))
+    cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (int(index), text, update['message']['chat']['id'], update['message']['message_id']))
     conn.commit()
 
+    # context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=update['message']['chat']['id'], message_id=update['message']['message_id'])
     # context.bot.send_message(chat_id=update.effective_chat.id, text=f'{templates[index-1][1]} ({proba[index]})\ntext: {text}')
 
-tag_handler = MessageHandler(Filters.photo & (~Filters.command), tag)
+def search(update, context):
+    texts = update['message']['text'].split(' ', 2)
+    if len(texts) == 1:
+        return
+    criteria = texts[1]
+    cur = conn.cursor()
+    cur.execute(
+    '''
+    SELECT chat_id, message_id FROM (
+      SELECT chat_id, message_id, tsv
+      FROM meme, plainto_tsquery(%s) AS q
+      WHERE (tsv @@ q)
+    ) AS t1 ORDER BY ts_rank_cd(t1.tsv, plainto_tsquery(%s)) DESC LIMIT 5;
+    ''', [criteria, criteria]
+    )
+    for record in cur:
+        context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=record[0], message_id=record[1])
 
-updater.dispatcher.add_handler(tag_handler)
+updater.bot.set_my_commands([BotCommand('search', 'searches for a meme')])
+updater.dispatcher.add_handler(MessageHandler(Filters.photo & (~Filters.command), tag))
+updater.dispatcher.add_handler(MessageHandler(Filters.command, search))
 updater.start_polling()
