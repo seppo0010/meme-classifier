@@ -5,3 +5,4 @@ train_data.csv
 .ipynb_checkpoints
 classifier*.pickle
 .env
+yoyo.ini

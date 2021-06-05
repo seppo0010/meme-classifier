@@ -10,3 +10,5 @@ requests
 matplotlib
 pytesseract
 python-dotenv
+yoyo-migrations
+psycopg2

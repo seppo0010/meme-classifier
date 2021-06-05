@@ -1,21 +1,25 @@
 from dotenv import load_dotenv
 load_dotenv()
+
 import os
-from telegram.ext import Updater, MessageHandler, Filters
-import numpy as np
-import pandas as pd
-import cv2
 import pickle
 try:
     from PIL import Image
 except ImportError:
     import Image
+import io
+
+import numpy as np
+import pandas as pd
 import pytesseract
 import cv2
 from matplotlib import cm
-import io
+import psycopg2
+from telegram.ext import Updater, MessageHandler, Filters
 
 from meme_classifier.compare_images import compare_images
+
+conn = psycopg2.connect(os.getenv('POSTGRES_CREDENTIALS'))
 
 updater = Updater(token=os.getenv('TELEGRAM_TOKEN'), use_context=True)
 template_path = 'template'
@@ -60,7 +64,12 @@ def tag(update, context):
         pytesseract.image_to_string(pil_image, lang='eng'),
         pytesseract.image_to_string(pil_image, lang='spa'),
     ))
-    context.bot.send_message(chat_id=update.effective_chat.id, text=f'{templates[index-1][1]} ({proba[index]})\ntext: {text}')
+
+    cur = conn.cursor()
+    cur.execute("INSERT INTO meme (update_id, template, text) VALUES (%s, %s, %s)", (update['update_id'], int(index), text))
+    conn.commit()
+
+    # context.bot.send_message(chat_id=update.effective_chat.id, text=f'{templates[index-1][1]} ({proba[index]})\ntext: {text}')
 
 tag_handler = MessageHandler(Filters.photo & (~Filters.command), tag)
 
