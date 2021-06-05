@@ -6,3 +6,4 @@ train_data.csv
 classifier*.pickle
 .env
 yoyo.ini
+ChatExport*

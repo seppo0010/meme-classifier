@@ -12,3 +12,4 @@ pytesseract
 python-dotenv
 yoyo-migrations
 psycopg2
+beautifulsoup4
