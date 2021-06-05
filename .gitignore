@@ -4,3 +4,4 @@ to_classify
 train_data.csv
 .ipynb_checkpoints
 classifier*.pickle
+.env
