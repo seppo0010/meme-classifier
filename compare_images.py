@@ -36,6 +36,16 @@ def compare_images(before, after):
             cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
     score2 = normalized_root_mse(before, after)
+
+    # https://theailearner.com/2019/08/13/comparing-histograms-using-opencv-python/
+    img1_hsv = cv2.cvtColor(before, cv2.COLOR_BGR2HSV)
+    img2_hsv = cv2.cvtColor(after, cv2.COLOR_BGR2HSV)
+    hist_img1 = cv2.calcHist([img1_hsv], [0,1], None, [180,256], [0,180,0,256])
+    cv2.normalize(hist_img1, hist_img1, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX);
+    hist_img2 = cv2.calcHist([img2_hsv], [0,1], None, [180,256], [0,180,0,256])
+    cv2.normalize(hist_img2, hist_img2, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX);
+    compare_hist = cv2.compareHist(hist_img1, hist_img2, cv2.HISTCMP_BHATTACHARYYA)
+
     # remove the following since htey are slow and added no value to the model
     # are, prec, rec = adapted_rand_error(before, after)
     # hausdorff_d = hausdorff_distance(before, after)
@@ -43,6 +53,7 @@ def compare_images(before, after):
     return {
         'similarity': score,
         'mse': score2,
+        'compare_hist': compare_hist,
         # 'adapted_rand_error_are': are,
         # 'adapted_rand_error_prec': prec,
         # 'adapted_rand_error_rec': rec,

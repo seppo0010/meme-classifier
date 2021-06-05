@@ -19,12 +19,13 @@ columns = []
 for t in templates:
     columns.append(t[1] + '_similarity')
     columns.append(t[1] + '_mse')
+    columns.append(t[1] + '_compare_hist')
 
 def get_row(after):
     cols = []
     for _, template_name, template_image in templates:
         comparison = compare_images(template_image, after)
-        cols.extend((comparison['similarity'], comparison['mse']))
+        cols.extend((comparison['similarity'], comparison['mse'], comparison['compare_hist']))
     return cols
 
 def tag(update, context):
