@@ -57,12 +57,15 @@ def make_buttons(record, srid, index):
         ])
     return buttons
 
-def send_search_result(chat_id, record, srid, index, context):
+def send_search_result(chat_id, record, srid, index, context, num_records):
+    template = ''
+    if record['display_name'] is not None:
+        template = f" ({record['display_name']})"
     context.bot.copy_message(
         chat_id=chat_id,
         from_chat_id=record['chat_id'],
         message_id=record['message_id'],
-        caption=record['display_name'],
+        caption=f"Result {index+1}/{num_records}{template}",
         reply_markup=InlineKeyboardMarkup(make_buttons(record, srid, index)),
     )
 
@@ -89,9 +92,9 @@ def search(update, context):
           SELECT chat_id, message_id, template, display_name, meme.id, tsv
           FROM meme
           LEFT JOIN meme_template ON meme.template = meme_template.id, plainto_tsquery(%s) AS q
-          WHERE (tsv @@ q) OR display_name LIKE %s
+          WHERE (tsv @@ q) OR LOWER(display_name) LIKE LOWER(%s)
         ) AS t1 ORDER BY ts_rank_cd(t1.tsv, plainto_tsquery(%s)) DESC LIMIT 50;
-        ''', [criteria, criteria, f'%criteria%']
+        ''', [criteria, f'%{criteria}%', criteria]
         )
     res = [dict(zip(('chat_id', 'message_id', 'template', 'display_name', 'id'), row)) for row in cur.fetchall()]
     if len(res) == 0:
@@ -105,7 +108,7 @@ def search(update, context):
 
     record = res[0]
     chat_id = update['message']['chat']['id']
-    send_search_result(chat_id, record, srid, 0, context)
+    send_search_result(chat_id, record, srid, 0, context, len(res))
 
 def bad_template_handler(update, context):
     id = json.loads(update['callback_query']['data'])['id']
@@ -141,7 +144,7 @@ def update_result_handler(update, context):
         chat_id=chat_id,
         message_id=message_id,
     )
-    send_search_result(chat_id, record, srid, index, context)
+    send_search_result(chat_id, record, srid, index, context, len(res))
 
 def callback_handler(update, context):
     {
