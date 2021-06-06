@@ -1,6 +1,33 @@
+import os
+import pickle
+try:
+    from PIL import Image
+except ImportError:
+    import Image
 import numpy as np
+import pandas as pd
 import cv2
+import pytesseract
 from skimage.metrics import structural_similarity, normalized_root_mse, adapted_rand_error, hausdorff_distance, peak_signal_noise_ratio
+from matplotlib import cm
+
+template_path = 'template'
+templates = [(1+i, f, cv2.imread(os.path.join(template_path, f))) for i, f in enumerate(os.listdir(template_path)) if os.path.isfile(os.path.join(template_path, f))]
+csv_path = 'train_data.csv'
+classifier = pickle.load(open(f'notebooks/classifier-{csv_path}.pickle', "rb"))
+
+columns = []
+for t in templates:
+    columns.append(t[1] + '_similarity')
+    columns.append(t[1] + '_mse')
+    columns.append(t[1] + '_compare_hist')
+
+def get_row(after):
+    cols = []
+    for _, template_name, template_image in templates:
+        comparison = compare_images(template_image, after)
+        cols.extend((comparison['similarity'], comparison['mse'], comparison['compare_hist']))
+    return cols
 
 def compare_images(before, after):
     after = cv2.resize(after, [300, 300])
@@ -61,3 +88,24 @@ def compare_images(before, after):
         # 'psnr': psnr,
     }
 
+def process_image(content):
+    nparr = np.frombuffer(content.read(), np.uint8)
+
+    img_np = cv2.imdecode(nparr, flags=1)
+    # cv2.imwrite('cv.jpg', img_np)
+
+    data = get_row(img_np)
+    df = pd.DataFrame([data], columns=columns)
+    proba = classifier.predict_proba(df)[0]
+    index = np.argmax(proba)
+    val = np.argmax(proba)
+
+    content.seek(0)
+    pil_image = Image.open(content)
+    # pil_image.save("pil.jpg", "JPEG")
+
+    text = '\n'.join((
+        pytesseract.image_to_string(pil_image, lang='eng'),
+        pytesseract.image_to_string(pil_image, lang='spa'),
+    ))
+    return int(index), text

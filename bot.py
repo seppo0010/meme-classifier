@@ -2,48 +2,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-import pickle
-try:
-    from PIL import Image
-except ImportError:
-    import Image
 import logging
 import io
 
-import numpy as np
-import pandas as pd
-import pytesseract
-import cv2
-from matplotlib import cm
 import psycopg2
 from telegram import BotCommand
 from telegram.ext import Updater, MessageHandler, Filters
 
-from meme_classifier.compare_images import compare_images
+from meme_classifier.images import process_image
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 conn = psycopg2.connect(os.getenv('POSTGRES_CREDENTIALS'))
-
 updater = Updater(token=os.getenv('TELEGRAM_TOKEN'), use_context=True)
-template_path = 'template'
-templates = [(1+i, f, cv2.imread(os.path.join(template_path, f))) for i, f in enumerate(os.listdir(template_path)) if os.path.isfile(os.path.join(template_path, f))]
-csv_path = 'train_data.csv'
-classifier = pickle.load(open(f'notebooks/classifier-{csv_path}.pickle', "rb"))
-
-columns = []
-for t in templates:
-    columns.append(t[1] + '_similarity')
-    columns.append(t[1] + '_mse')
-    columns.append(t[1] + '_compare_hist')
-
-def get_row(after):
-    cols = []
-    for _, template_name, template_image in templates:
-        comparison = compare_images(template_image, after)
-        cols.extend((comparison['similarity'], comparison['mse'], comparison['compare_hist']))
-    return cols
 
 def tag(update, context):
     logger.info('tagging a message')
@@ -58,28 +30,10 @@ def tag(update, context):
     b = io.BytesIO()
     content = photo.get_file().download(out=b)
     content.seek(0)
-    nparr = np.frombuffer(content.read(), np.uint8)
-
-    img_np = cv2.imdecode(nparr, flags=1)
-    # cv2.imwrite('cv.jpg', img_np)
-
-    data = get_row(img_np)
-    df = pd.DataFrame([data], columns=columns)
-    proba = classifier.predict_proba(df)[0]
-    index = np.argmax(proba)
-    val = np.argmax(proba)
-
-    content.seek(0)
-    pil_image = Image.open(content)
-    # pil_image.save("pil.jpg", "JPEG")
-
-    text = '\n'.join((
-        pytesseract.image_to_string(pil_image, lang='eng'),
-        pytesseract.image_to_string(pil_image, lang='spa'),
-    ))
+    template, text = process_image(content)
 
     cur = conn.cursor()
-    cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (int(index), text, chat_id, message_id))
+    cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (template, text, chat_id, message_id))
     conn.commit()
 
     # context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=update['message']['chat']['id'], message_id=update['message']['message_id'])
