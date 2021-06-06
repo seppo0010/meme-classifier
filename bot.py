@@ -54,8 +54,13 @@ def search(update, context):
     ) AS t1 ORDER BY ts_rank_cd(t1.tsv, plainto_tsquery(%s)) DESC LIMIT 5;
     ''', [criteria, criteria]
     )
+    found = False
     for record in cur:
+        found = True
         context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=record[0], message_id=record[1])
+
+    if not found:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f'no results :(')
 
 updater.bot.set_my_commands([BotCommand('search', 'searches for a meme')])
 updater.dispatcher.add_handler(MessageHandler(Filters.photo & (~Filters.command), tag))
