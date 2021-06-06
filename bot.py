@@ -4,12 +4,15 @@ load_dotenv()
 import os
 import logging
 import io
+import re
 
 import psycopg2
-from telegram import BotCommand
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
+from telegram import BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, InlineQueryHandler, CallbackQueryHandler
 
-from meme_classifier.images import process_image
+from meme_classifier.images import process_image, templates
+
+print([t[1] for t in templates])
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -44,26 +47,51 @@ def search(update, context):
     if len(texts) == 1:
         return
     criteria = texts[1]
+    template = re.match('^template=([0-9]+)$', criteria)
     cur = conn.cursor()
-    cur.execute(
-    '''
-    SELECT chat_id, message_id FROM (
-      SELECT chat_id, message_id, tsv
-      FROM meme, plainto_tsquery(%s) AS q
-      WHERE (tsv @@ q)
-    ) AS t1 ORDER BY ts_rank_cd(t1.tsv, plainto_tsquery(%s)) DESC LIMIT 5;
-    ''', [criteria, criteria]
-    )
+    if template:
+        cur.execute(
+        '''
+        SELECT chat_id, message_id, template, display_name, meme.id FROM meme LEFT JOIN meme_template ON meme.template = meme_template.id WHERE template = %s
+        ''', [template.group(1)])
+    else:
+        cur.execute(
+        '''
+        SELECT chat_id, message_id, template, display_name, id FROM (
+          SELECT chat_id, message_id, template, display_name, meme.id, tsv
+          FROM meme
+          LEFT JOIN meme_template ON meme.template = meme_template.id, plainto_tsquery(%s) AS q
+          WHERE (tsv @@ q)
+        ) AS t1 ORDER BY ts_rank_cd(t1.tsv, plainto_tsquery(%s)) DESC LIMIT 5;
+        ''', [criteria, criteria]
+        )
     found = False
     for record in cur:
         found = True
-        context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=record[0], message_id=record[1])
+        markup = None
+        replay_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton(text='Bad template', callback_data=record[4])],
+        ]) if record[2] else None
+        context.bot.copy_message(
+            chat_id=update['message']['chat']['id'],
+            from_chat_id=record[0],
+            message_id=record[1],
+            caption=record[3],
+            reply_markup=replay_markup,
+        )
 
     if not found:
         context.bot.send_message(chat_id=update.effective_chat.id, text=f'no results :(')
 
+def bad_template_handler(update, context):
+    cur = conn.cursor()
+    cur.execute("UPDATE meme SET bad_template = template, template = 0 WHERE id = %s", (update['callback_query']['data'],))
+    conn.commit()
+    context.bot.edit_message_caption(update['callback_query']['message']['chat']['id'], message_id=update['callback_query']['message']['message_id'], caption=None, reply_markup=InlineKeyboardMarkup([]))
+
 updater.bot.set_my_commands([BotCommand('search', 'searches for a meme')])
 updater.dispatcher.add_handler(MessageHandler(Filters.photo & (~Filters.command), tag))
 updater.dispatcher.add_handler(CommandHandler('search', search))
-
+updater.dispatcher.add_handler(CallbackQueryHandler(bad_template_handler))
+# MessageHandler(Filters.text(['Bad template']), bad_template_handler)
 updater.start_polling()

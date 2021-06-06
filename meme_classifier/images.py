@@ -10,11 +10,13 @@ import cv2
 import pytesseract
 from skimage.metrics import structural_similarity, normalized_root_mse, adapted_rand_error, hausdorff_distance, peak_signal_noise_ratio
 from matplotlib import cm
+import pathlib
 
-template_path = 'template'
+base_path = pathlib.Path(__file__).parent.absolute()
+template_path = os.path.join(base_path, '..', 'template')
 templates = [(1+i, f, cv2.imread(os.path.join(template_path, f))) for i, f in enumerate(os.listdir(template_path)) if os.path.isfile(os.path.join(template_path, f))]
 csv_path = 'train_data.csv'
-classifier = pickle.load(open(f'notebooks/classifier-{csv_path}.pickle', "rb"))
+classifier = pickle.load(open(os.path.join(base_path, '..', f'notebooks/classifier-{csv_path}.pickle'), "rb"))
 
 columns = []
 for t in templates:
