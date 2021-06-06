@@ -91,9 +91,9 @@ def search(update, context):
         SELECT chat_id, message_id, template, display_name, id FROM (
           SELECT chat_id, message_id, template, display_name, meme.id, tsv
           FROM meme
-          LEFT JOIN meme_template ON meme.template = meme_template.id, plainto_tsquery(%s) AS q
+          LEFT JOIN meme_template ON meme.template = meme_template.id, phraseto_tsquery(%s) AS q
           WHERE (tsv @@ q) OR LOWER(display_name) LIKE LOWER(%s)
-        ) AS t1 ORDER BY ts_rank_cd(t1.tsv, plainto_tsquery(%s)) DESC LIMIT 50;
+        ) AS t1 ORDER BY ts_rank_cd(t1.tsv, phraseto_tsquery(%s)) DESC LIMIT 50;
         ''', [criteria, f'%{criteria}%', criteria]
         )
     res = [dict(zip(('chat_id', 'message_id', 'template', 'display_name', 'id'), row)) for row in cur.fetchall()]
