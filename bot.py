@@ -7,6 +7,7 @@ try:
     from PIL import Image
 except ImportError:
     import Image
+import logging
 import io
 
 import numpy as np
@@ -19,6 +20,9 @@ from telegram import BotCommand
 from telegram.ext import Updater, MessageHandler, Filters
 
 from meme_classifier.compare_images import compare_images
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
 
 conn = psycopg2.connect(os.getenv('POSTGRES_CREDENTIALS'))
 
@@ -42,7 +46,15 @@ def get_row(after):
     return cols
 
 def tag(update, context):
-    photo = update['message'].effective_attachment[-1]
+    logger.info('tagging a message')
+    if update['message'] is not None:
+        photo = update['message'].effective_attachment[-1]
+        chat_id = update['message']['chat']['id']
+        message_id = update['message']['message_id']
+    else:
+        photo = update['channel_post']['photo'][-1]
+        chat_id = update['channel_post']['sender_chat']['id']
+        message_id = update['channel_post']['message_id']
     b = io.BytesIO()
     content = photo.get_file().download(out=b)
     content.seek(0)
@@ -67,7 +79,7 @@ def tag(update, context):
     ))
 
     cur = conn.cursor()
-    cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (int(index), text, update['message']['chat']['id'], update['message']['message_id']))
+    cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (int(index), text, chat_id, message_id))
     conn.commit()
 
     # context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=update['message']['chat']['id'], message_id=update['message']['message_id'])
