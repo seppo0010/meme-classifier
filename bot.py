@@ -7,7 +7,7 @@ import io
 
 import psycopg2
 from telegram import BotCommand
-from telegram.ext import Updater, MessageHandler, Filters
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 
 from meme_classifier.images import process_image
 
@@ -59,5 +59,6 @@ def search(update, context):
 
 updater.bot.set_my_commands([BotCommand('search', 'searches for a meme')])
 updater.dispatcher.add_handler(MessageHandler(Filters.photo & (~Filters.command), tag))
-updater.dispatcher.add_handler(MessageHandler(Filters.command, search))
+updater.dispatcher.add_handler(CommandHandler('search', search))
+
 updater.start_polling()
