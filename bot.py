@@ -42,10 +42,14 @@ def tag(update, context):
     # context.bot.send_message(chat_id=update.effective_chat.id, text=f'{templates[index-1][1]} ({proba[index]})\ntext: {text}')
 
 def make_buttons(record, srid, index):
+    chat_id = record['chat_id']
+    if f'{chat_id}'.startswith('-100'):
+        chat_id = f'{chat_id}'[4:] # telegram channel weirdness
     buttons = [
         [
-            InlineKeyboardButton(text='<', callback_data=json.dumps({'action': 'update_res', 'index': index - 1, 'srid': srid})),
-            InlineKeyboardButton(text='>', callback_data=json.dumps({'action': 'update_res', 'index': index + 1, 'srid': srid})),
+            InlineKeyboardButton(text='⬅️', callback_data=json.dumps({'action': 'update_res', 'index': index - 1, 'srid': srid})),
+            InlineKeyboardButton(text='➡️', callback_data=json.dumps({'action': 'update_res', 'index': index + 1, 'srid': srid})),
+            InlineKeyboardButton(text='🔗', url=f'https://t.me/c/{chat_id}/{record["message_id"]}'),
         ],
     ]
     if record['template']:
