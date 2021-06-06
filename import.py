@@ -1,20 +1,26 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import sys
 import os
 import re
-from bs4 import BeautifulSoup
+import json
+
+import psycopg2
+
+from meme_classifier.images import process_image
 
 path = sys.argv[1]
-chat_id = int(sys.argv[2])
+data = json.load(open(os.path.join(path, 'result.json'), 'r'))
+chat_id = data['id']
+conn = psycopg2.connect(os.getenv('POSTGRES_CREDENTIALS'))
 
-def process_file(filepath):
-    with open(filepath, 'r') as fp:
-        soup = BeautifulSoup(fp, 'html.parser')
-    for link in soup.find_all('a', {'class': 'photo_wrap clearfix pull_left'}):
-        message_id = re.search(r'_([0-9]+)@', link['href']).groups(1)[0]
-        template, text = process_image(link['href'])
-        save_image(chat_id, message_id, template, text)
+for m in data['messages']:
+    if 'photo' in m:
+        template, text = process_image(open(os.path.join(path, m['photo']), 'rb'))
+        message_id = m['id']
+        print(f'processing message {message_id}')
 
-for filename in os.listdir(path):
-    filepath = os.path.join(path, filename)
-    if os.path.isfile(filepath) and filepath.endswith('.html'):
-        process_file(filepath)
+        cur = conn.cursor()
+        cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (template, text, chat_id, message_id))
+        conn.commit()
