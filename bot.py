@@ -156,9 +156,20 @@ def callback_handler(update, context):
         'update_res': update_result_handler,
     }[json.loads(update['callback_query']['data'])['action']](update, context)
 
+def edited_message(update, context):
+    message_id = update['edited_channel_post']['message_id'] - 1
+    chat_id = update['edited_channel_post']['sender_chat']['id']
+    votes = update['edited_channel_post']['reply_markup']['inline_keyboard'][0]
+    for i, v in enumerate(votes):
+        votes[i] = int(re.search(r'([0-9]+)', v['text']).group(1))
+    l, d = votes
+    cur = conn.cursor()
+    cur.execute("UPDATE meme SET upvotes = %s, downvotes = %s WHERE message_id = %s AND chat_id = %s", (l, d, message_id, chat_id))
+    conn.commit()
 
 updater.bot.set_my_commands([BotCommand('search', 'searches for a meme')])
 updater.dispatcher.add_handler(MessageHandler(Filters.photo & (~Filters.command), tag))
+updater.dispatcher.add_handler(MessageHandler(Filters.update.edited_channel_post, edited_message))
 updater.dispatcher.add_handler(CommandHandler('search', search))
 updater.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
 updater.start_polling()
