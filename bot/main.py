@@ -7,6 +7,7 @@ import logging
 import io
 import re
 import json
+from datetime import datetime
 
 import psycopg2
 from telegram import BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
@@ -37,8 +38,9 @@ def tag(update, context):
     content.seek(0)
     template, text = process_image(content)
 
+    date = update['channel_post']['date']
     cur = conn.cursor()
-    cur.execute("INSERT INTO meme (template, text, chat_id, message_id) VALUES (%s, %s, %s, %s)", (template, text, chat_id, message_id))
+    cur.execute("INSERT INTO meme (template, text, chat_id, message_id, date) VALUES (%s, %s, %s, %s, %s)", (template, text, chat_id, message_id, date))
     conn.commit()
 
     # context.bot.forward_message(chat_id=update['message']['chat']['id'], from_chat_id=update['message']['chat']['id'], message_id=update['message']['message_id'])
