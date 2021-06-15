@@ -7,3 +7,4 @@ classifier*.pickle
 .env
 yoyo.ini
 ChatExport*
+anon.session
