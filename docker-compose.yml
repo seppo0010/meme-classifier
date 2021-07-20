@@ -23,10 +23,13 @@ services:
       - bot-database
     secrets:
       - postgres-password
+      - telegram-token
 
 secrets:
   postgres-password:
     file: ./postgres-password
+  telegram-token:
+    file: ./telegram-token
 
 networks:
   bot-database:

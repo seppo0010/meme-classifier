@@ -9,3 +9,4 @@ yoyo.ini
 ChatExport*
 anon.session
 postgres-password
+telegram-token

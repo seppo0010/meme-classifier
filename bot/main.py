@@ -28,7 +28,9 @@ with open('/run/secrets/postgres-password', 'r') as fp:
     pg_password = fp.read().strip()
 dsn = f'postgres://{pg_user}:{urllib.parse.quote(pg_password)}@{pg_host}/{pg_db}'
 conn = psycopg2.connect(dsn)
-updater = Updater(token=os.getenv('TELEGRAM_TOKEN'), use_context=True)
+with open('/run/secrets/telegram-token', 'r') as fp:
+    telegram_token = fp.read().strip()
+updater = Updater(token=telegram_token, use_context=True)
 
 def tag(update, context):
     logger.info('tagging a message')
