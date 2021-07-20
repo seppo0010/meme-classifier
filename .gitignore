@@ -8,3 +8,4 @@ classifier*.pickle
 yoyo.ini
 ChatExport*
 anon.session
+postgres-password

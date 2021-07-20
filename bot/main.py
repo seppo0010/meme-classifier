@@ -7,6 +7,7 @@ import logging
 import io
 import re
 import json
+import urllib
 from datetime import datetime
 
 import psycopg2
@@ -20,7 +21,13 @@ from meme_classifier.images import process_image, templates
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-conn = psycopg2.connect(os.getenv('POSTGRES_CREDENTIALS'))
+pg_user = os.getenv("POSTGRES_USER")
+pg_host = 'database'
+pg_db = os.getenv("POSTGRES_DB")
+with open('/run/secrets/postgres-password', 'r') as fp:
+    pg_password = fp.read().strip()
+dsn = f'postgres://{pg_user}:{urllib.parse.quote(pg_password)}@{pg_host}/{pg_db}'
+conn = psycopg2.connect(dsn)
 updater = Updater(token=os.getenv('TELEGRAM_TOKEN'), use_context=True)
 
 def tag(update, context):

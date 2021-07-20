@@ -16,9 +16,9 @@ matplotlib = "*"
 pytesseract = "*"
 python-dotenv = "*"
 yoyo-migrations = "*"
-psycopg2 = "*"
 beautifulsoup4 = "*"
 Flask = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 

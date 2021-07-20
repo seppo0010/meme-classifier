@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  database:
+    image: postgres
+    env_file: ./postgres-config
+    secrets:
+      - postgres-password
+    networks:
+      - bot-database
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot.Dockerfile
+    env_file:
+      - ./postgres-config
+      - ./.env
+    depends_on:
+      - "database"
+    networks:
+      - bot-database
+    secrets:
+      - postgres-password
+
+secrets:
+  postgres-password:
+    file: ./postgres-password
+
+networks:
+  bot-database:
+
+volumes:
+  pgdata:
