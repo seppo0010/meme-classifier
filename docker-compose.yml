@@ -7,6 +7,7 @@ services:
       - postgres-password
     networks:
       - bot-database
+      - tweet-database
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -16,7 +17,6 @@ services:
       dockerfile: bot.Dockerfile
     env_file:
       - ./postgres-config
-      - ./.env
     depends_on:
       - "database"
     networks:
@@ -25,14 +25,51 @@ services:
       - postgres-password
       - telegram-token
 
+  tweet:
+    build:
+      context: .
+      dockerfile: tweet.Dockerfile
+    env_file:
+      - ./postgres-config
+    depends_on:
+      - "database"
+    networks:
+      - tweet-database
+    secrets:
+      - postgres-password
+      - telegram-token
+      - telegram_api_hash
+      - telegram_api_id
+      - telegram_phone
+      - twitter_access_token
+      - twitter_api_key
+      - twitter_api_secret
+      - twitter_secret_token
+
 secrets:
   postgres-password:
-    file: ./postgres-password
+    file: ./secrets/postgres-password
   telegram-token:
-    file: ./telegram-token
+    file: ./secrets/telegram-token
+  telegram_api_hash:
+    file: ./secrets/telegram_api_hash
+  telegram_api_id:
+    file: ./secrets/telegram_api_id
+  telegram_phone:
+    file: ./secrets/telegram_phone
+  twitter_access_token:
+    file: ./secrets/twitter_access_token
+  twitter_api_key:
+    file: ./secrets/twitter_api_key
+  twitter_api_secret:
+    file: ./secrets/twitter_api_secret
+  twitter_secret_token:
+    file: ./secrets/twitter_secret_token
+
 
 networks:
   bot-database:
+  tweet-database:
 
 volumes:
   pgdata:

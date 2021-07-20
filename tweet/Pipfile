@@ -7,7 +7,7 @@ name = "pypi"
 python-telegram = "*"
 telethon = "*"
 tweepy = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 

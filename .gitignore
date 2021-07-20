@@ -10,3 +10,11 @@ ChatExport*
 anon.session
 postgres-password
 telegram-token
+secrets/telegram_api_hash
+secrets/telegram_api_id
+secrets/telegram_phone
+secrets/telegram-token
+secrets/twitter_access_token
+secrets/twitter_api_key
+secrets/twitter_api_secret
+secrets/twitter_secret_token
