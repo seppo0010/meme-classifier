@@ -11,4 +11,4 @@ ADD tweet/Pipfile* /tweet/
 RUN cd /tweet && pipenv install --deploy --system --ignore-pipfile 
 ADD meme_classifier /tweet/meme_classifier
 ADD tweet /tweet
-CMD cd /tweet/run.sh
+CMD /tweet/run.sh
