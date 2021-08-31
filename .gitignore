@@ -18,3 +18,10 @@ secrets/twitter_access_token
 secrets/twitter_api_key
 secrets/twitter_api_secret
 secrets/twitter_secret_token
+secrets/imgur_access_token
+secrets/imgur_account_id
+secrets/imgur_client_id
+secrets/imgur_client_secret
+secrets/imgur_refresh_token
+secrets/instagram_access_token
+secrets/instagram_user_id

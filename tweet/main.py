@@ -1,10 +1,13 @@
 import os
 import io
 import urllib
+from tempfile import NamedTemporaryFile
 
+from imgurpython import ImgurClient
 from telethon import TelegramClient
 import tweepy
 import psycopg2
+import requests
 
 def getsecret(key):
     with open('/run/secrets/' + key.lower(), 'r') as fp:
@@ -16,6 +19,8 @@ tg = TelegramClient(
     api_hash=getsecret('TELEGRAM_API_HASH'),
 )
 
+imgur = ImgurClient(getsecret('IMGUR_CLIENT_ID'), getsecret('IMGUR_CLIENT_SECRET'), getsecret('IMGUR_ACCESS_TOKEN'), getsecret('IMGUR_REFRESH_TOKEN'))
+instagram_user_id, instagram_access_token = getsecret('INSTAGRAM_USER_ID'), getsecret('INSTAGRAM_ACCESS_TOKEN')
 auth = tweepy.OAuthHandler(getsecret('TWITTER_API_KEY'), getsecret('TWITTER_API_SECRET'))
 auth.set_access_token(getsecret('TWITTER_ACCESS_TOKEN'), getsecret('TWITTER_SECRET_TOKEN'))
 tweepy_api = tweepy.API(auth)
@@ -43,9 +48,21 @@ async def main():
     await tg.download_media(message, file=media_data, thumb=-1)
     media_data.seek(0)
 
+    with NamedTemporaryFile() as image:
+        image.write(media_data.read())
+        image.flush()
+        imgur_path = imgur.upload_from_path(image.name, anon=False)['link']
+    media_data.seek(0)
+
+    creation_id = requests.post(
+        f'https://graph.facebook.com/v11.0/{instagram_user_id}/media?image_url={imgur_path}&access_token={instagram_access_token}'
+    ).json()['id']
+    r = requests.post(
+        f'https://graph.facebook.com/v11.0/{instagram_user_id}/media_publish?creation_id={creation_id}&access_token={instagram_access_token}'
+    ).json()
+
     media = tweepy_api.media_upload('', file=media_data)
     tweepy_api.update_status('', media_ids=[media.media_id_string])
-
 
 
 tg.start(getsecret('TELEGRAM_PHONE'))

@@ -8,6 +8,8 @@ python-telegram = "*"
 telethon = "*"
 tweepy = "*"
 psycopg2-binary = "*"
+imgurpython = "*"
+requests = "*"
 
 [dev-packages]
 

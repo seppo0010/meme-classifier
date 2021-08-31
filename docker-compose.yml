@@ -45,6 +45,14 @@ services:
       - twitter_api_key
       - twitter_api_secret
       - twitter_secret_token
+      - imgur_access_token
+      - imgur_account_id
+      - imgur_client_id
+      - imgur_client_secret
+      - imgur_refresh_token
+      - instagram_access_token
+      - instagram_user_id
+
 
 secrets:
   postgres-password:
@@ -65,6 +73,21 @@ secrets:
     file: ./secrets/twitter_api_secret
   twitter_secret_token:
     file: ./secrets/twitter_secret_token
+  imgur_access_token:
+    file: ./secrets/imgur_access_token
+  imgur_account_id:
+    file: ./secrets/imgur_account_id
+  imgur_client_id:
+    file: ./secrets/imgur_client_id
+  imgur_client_secret:
+    file: ./secrets/imgur_client_secret
+  imgur_refresh_token:
+    file: ./secrets/imgur_refresh_token
+  instagram_access_token:
+    file: ./secrets/instagram_access_token
+  instagram_user_id:
+    file: ./secrets/instagram_user_id
+
 
 
 networks:
