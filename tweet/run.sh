@@ -2,7 +2,8 @@
 set -Eeux
 
 while true; do
-    date
+    echo starting "$(date)"
     cd /tweet && python3 main.py
+    echo finished "$(date)"
     sleep 36000
 done
