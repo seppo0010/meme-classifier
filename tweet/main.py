@@ -37,7 +37,7 @@ async def main():
     cur = conn.cursor()
     cur.execute(
     '''
-    SELECT chat_id, message_id FROM meme WHERE date > %s AND upvotes >= 5 ORDER BY upvotes - downvotes DESC
+    SELECT chat_id, message_id FROM meme WHERE date > %s AND upvotes >= 4 ORDER BY upvotes - downvotes DESC
     ''', [date])
     res = cur.fetchone()
     if res is None:
