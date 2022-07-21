@@ -37,12 +37,12 @@ async def main():
     cur = conn.cursor()
     cur.execute(
     '''
-    SELECT chat_id, message_id FROM meme WHERE date > %s AND upvotes >= 5 ORDER BY upvotes - downvotes DESC
+    SELECT chat_id, message_id, text FROM meme WHERE date > %s AND upvotes >= 5 ORDER BY upvotes - downvotes DESC
     ''', [date])
     res = cur.fetchone()
     if res is None:
         return
-    chat_id, message_id = res
+    chat_id, message_id, text = res
     message = await tg.get_messages(chat_id, ids=message_id)
     media_data = io.BytesIO()
     await tg.download_media(message, file=media_data, thumb=-1)
@@ -67,6 +67,8 @@ async def main():
         pass
 
     media = tweepy_api.media_upload('', file=media_data)
+    if text is not None and text.strip() != '':
+        tweepy_api.create_media_metadata(media.id, text)
     tweepy_api.update_status('', media_ids=[media.media_id_string])
 
 
