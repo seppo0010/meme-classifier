@@ -1,17 +1,16 @@
 FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y software-properties-common &&\
+    apt-add-repository -y ppa:alex-p/tesseract-ocr-devel &&\
+    apt-get update && apt-get install -y \
         python3-pip \
         libgl1-mesa-glx \
         libglib2.0-0 \
         tesseract-ocr \
+        tesseract-ocr-spa \
         wget \
         && rm -rf /var/lib/apt/lists/*
-
-RUN cd /usr/share/tesseract-ocr/4.00/tessdata && \
-       wget -q https://github.com/tesseract-ocr/tessdata/raw/master/spa.traineddata && \
-       wget -q https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata
 
 RUN pip install pipenv
 
