@@ -68,7 +68,7 @@ async def main():
 
     media = tweepy_api.media_upload('', file=media_data)
     if text is not None and text.strip() != '':
-        tweepy_api.create_media_metadata(media.id, text)
+        tweepy_api.create_media_metadata(media.media_id_string, text)
     tweepy_api.update_status('', media_ids=[media.media_id_string])
 
 
