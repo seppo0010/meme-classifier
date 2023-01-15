@@ -48,24 +48,6 @@ async def main():
     await tg.download_media(message, file=media_data, thumb=-1)
     media_data.seek(0)
 
-    with NamedTemporaryFile() as image:
-        image.write(media_data.read())
-        image.flush()
-        imgur_path = imgur.upload_from_path(image.name, anon=False)['link']
-    media_data.seek(0)
-
-    try:
-        r = requests.post(
-            f'https://graph.facebook.com/v11.0/{instagram_user_id}/media?image_url={imgur_path}&access_token={instagram_access_token}'
-        ).json()
-        creation_id = r['id']
-        r = requests.post(
-            f'https://graph.facebook.com/v11.0/{instagram_user_id}/media_publish?creation_id={creation_id}&access_token={instagram_access_token}'
-        ).json()
-    except:
-        print('failed', r)
-        pass
-
     media = tweepy_api.media_upload('', file=media_data)
     if text is not None and text.strip() != '':
         tweepy_api.create_media_metadata(media.media_id_string, text)

@@ -11,20 +11,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  bot:
-    build:
-      context: .
-      dockerfile: bot.Dockerfile
-    env_file:
-      - ./postgres-config
-    depends_on:
-      - "database"
-    networks:
-      - bot-database
-    secrets:
-      - postgres-password
-      - telegram-token
-
   tweet:
     build:
       context: .
